@@ -1,7 +1,7 @@
 /*
   RCSwitch - Arduino libary for remote control outlet switches
   Copyright (c) 2011 Suat Özgür.  All right reserved.
-  
+
   Contributors:
   - Andre Koehler / info(at)tomate-online(dot)de
   - Gordeev Andrey Vladimirovich / gordeev(at)openpyro(dot)com
@@ -13,7 +13,7 @@
   - Robert ter Vehn / <first name>.<last name>(at)gmail(dot)com
   - Johann Richard / <first name>.<last name>(at)gmail(dot)com
   - Vlad Gheorghe / <first name>.<last name>(at)gmail(dot)com https://github.com/vgheo
-  
+
   Project home: https://github.com/sui77/rc-switch/
 
   This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
     #define memcpy_P(dest, src, num) memcpy((dest), (src), (num))
 #endif
 
-#if defined(ESP8266) || defined(ESP32)
+#ifdef ESP8266
     // interrupt handler and related code must be in RAM on ESP8266,
     // according to issue #46.
     #define RECEIVE_ATTR ICACHE_RAM_ATTR
@@ -51,7 +51,7 @@
 
 /* Format for protocol definitions:
  * {pulselength, Sync bit, "0" bit, "1" bit}
- * 
+ *
  * pulselength: pulse length in microseconds, e.g. 350
  * Sync bit: {1, 31} means 1 high pulse and 31 low pulses
  *     (perceived as a 31*pulselength long pulse, total length of sync bit is
@@ -68,18 +68,19 @@
  *
  * These are combined to form Tri-State bits when sending or receiving codes.
  */
-#if defined(ESP8266) || defined(ESP32)
+#ifdef ESP8266
 static const RCSwitch::Protocol proto[] = {
 #else
 static const RCSwitch::Protocol PROGMEM proto[] = {
 #endif
-  { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
-  { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
-  { 100, { 30, 71 }, {  4, 11 }, {  9,  6 }, false },    // protocol 3
-  { 380, {  1,  6 }, {  1,  3 }, {  3,  1 }, false },    // protocol 4
-  { 500, {  6, 14 }, {  1,  2 }, {  2,  1 }, false },    // protocol 5
-  { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true },      // protocol 6 (HT6P20B)
-  { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false }     // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
+  // { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
+  // { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
+  // { 100, { 30, 71 }, {  4, 11 }, {  9,  6 }, false },    // protocol 3
+  // { 380, {  1,  6 }, {  1,  3 }, {  3,  1 }, false },    // protocol 4
+  // { 500, {  6, 14 }, {  1,  2 }, {  2,  1 }, false },    // protocol 5
+  // { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true },      // protocol 6 (HT6P20B)
+  { 100, { 13,  15 }, {  21,  8 }, {  8,  21 }, true },
+  { 100, { 13,  15 }, {  21,  8 }, {  8,  21 }, false }      // protocol 7 (HT6P20B)
 };
 
 enum {
@@ -87,12 +88,12 @@ enum {
 };
 
 #if not defined( RCSwitchDisableReceiving )
-volatile unsigned long RCSwitch::nReceivedValue = 0;
-volatile unsigned int RCSwitch::nReceivedBitlength = 0;
-volatile unsigned int RCSwitch::nReceivedDelay = 0;
-volatile unsigned int RCSwitch::nReceivedProtocol = 0;
-int RCSwitch::nReceiveTolerance = 60;
-const unsigned int RCSwitch::nSeparationLimit = 4300;
+unsigned long RCSwitch::nReceivedValue = 0;
+unsigned int RCSwitch::nReceivedBitlength = 0;
+unsigned int RCSwitch::nReceivedDelay = 0;
+unsigned int RCSwitch::nReceivedProtocol = 0;
+int RCSwitch::nReceiveTolerance = 150;
+const unsigned int RCSwitch::nSeparationLimit = 5000;
 // separationLimit: minimum microseconds between received codes, closer codes are ignored.
 // according to discussion on issue #14 it might be more suitable to set the separation
 // limit to the same time as the 'low' part of the sync signal for the current protocol.
@@ -124,7 +125,7 @@ void RCSwitch::setProtocol(int nProtocol) {
   if (nProtocol < 1 || nProtocol > numProto) {
     nProtocol = 1;  // TODO: trigger an error, e.g. "bad protocol" ???
   }
-#if defined(ESP8266) || defined(ESP32)
+#ifdef ESP8266
   this->protocol = proto[nProtocol-1];
 #else
   memcpy_P(&this->protocol, &proto[nProtocol-1], sizeof(Protocol));
@@ -162,7 +163,7 @@ void RCSwitch::setReceiveTolerance(int nPercent) {
   RCSwitch::nReceiveTolerance = nPercent;
 }
 #endif
-  
+
 
 /**
  * Enable transmissions
@@ -365,7 +366,7 @@ char* RCSwitch::getCodeWordC(char sFamily, int nGroup, int nDevice, bool bStatus
   if ( nFamily < 0 || nFamily > 15 || nGroup < 1 || nGroup > 4 || nDevice < 1 || nDevice > 4) {
     return 0;
   }
-  
+
   // encode the family into four bits
   sReturn[nReturnPos++] = (nFamily & 1) ? 'F' : '0';
   sReturn[nReturnPos++] = (nFamily & 2) ? 'F' : '0';
@@ -401,7 +402,7 @@ char* RCSwitch::getCodeWordC(char sFamily, int nGroup, int nDevice, bool bStatus
  *
  * Source: http://www.the-intruder.net/funksteckdosen-von-rev-uber-arduino-ansteuern/
  *
- * @param sGroup        Name of the switch group (A..D, resp. a..d) 
+ * @param sGroup        Name of the switch group (A..D, resp. a..d)
  * @param nDevice       Number of the switch itself (1..3)
  * @param bStatus       Whether to switch on (true) or off (false)
  *
@@ -506,9 +507,6 @@ void RCSwitch::send(unsigned long code, unsigned int length) {
     this->transmit(protocol.syncFactor);
   }
 
-  // Disable transmit after sending (i.e., for inverted protocols)
-  digitalWrite(this->nTransmitterPin, LOW);
-
 #if not defined( RCSwitchDisableReceiving )
   // enable receiver again if we just disabled it
   if (nReceiverInterrupt_backup != -1) {
@@ -523,7 +521,7 @@ void RCSwitch::send(unsigned long code, unsigned int length) {
 void RCSwitch::transmit(HighLow pulses) {
   uint8_t firstLogicLevel = (this->protocol.invertedSignal) ? LOW : HIGH;
   uint8_t secondLogicLevel = (this->protocol.invertedSignal) ? HIGH : LOW;
-  
+
   digitalWrite(this->nTransmitterPin, firstLogicLevel);
   delayMicroseconds( this->protocol.pulseLength * pulses.high);
   digitalWrite(this->nTransmitterPin, secondLogicLevel);
@@ -599,7 +597,7 @@ static inline unsigned int diff(int A, int B) {
  *
  */
 bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCount) {
-#if defined(ESP8266) || defined(ESP32)
+#ifdef ESP8266
     const Protocol &pro = proto[p-1];
 #else
     Protocol pro;
@@ -609,9 +607,10 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     unsigned long code = 0;
     //Assuming the longer pulse length is the pulse captured in timings[0]
     const unsigned int syncLengthInPulses =  ((pro.syncFactor.low) > (pro.syncFactor.high)) ? (pro.syncFactor.low) : (pro.syncFactor.high);
-    const unsigned int delay = RCSwitch::timings[0] / syncLengthInPulses;
-    const unsigned int delayTolerance = delay * RCSwitch::nReceiveTolerance / 100;
-    
+    //const unsigned int delay = RCSwitch::timings[0] / syncLengthInPulses;
+    const unsigned int delay = pro.pulseLength;
+    const unsigned int delayTolerance = delay * RCSwitch::nReceiveTolerance / 15;
+
     /* For protocols that start low, the sync period looks like
      *               _________
      * _____________|         |XXXXXXXXXXXX|
@@ -631,17 +630,77 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
      */
     const unsigned int firstDataTiming = (pro.invertedSignal) ? (2) : (1);
 
+    // Serial.print("##################\n ");
+    // Serial.print("##################\n ");
+    //
+    // Serial.print("syncLengthInPulses ");
+    // Serial.print(syncLengthInPulses);
+    // Serial.print("\n");
+    //
+    // Serial.print("delay ");
+    // Serial.print(delay);
+    // Serial.print("\n");
+    //
+    //
+    // Serial.print("delayTolerance ");
+    // Serial.print(delayTolerance);
+    // Serial.print("\n");
+
+
+
     for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2) {
+
+
+      // Serial.print("data i ");
+      // Serial.print(RCSwitch::timings[i]);
+      // Serial.print("\n");
+      //
+      // Serial.print("data i +1 ");
+      // Serial.print(RCSwitch::timings[i +1 ]);
+      // Serial.print("\n\n");
+      //
+      // Serial.print("changecount 0 \n");
+      // Serial.print(diff(RCSwitch::timings[i], delay * pro.zero.high));
+      // Serial.print(" < ");
+      // Serial.print(delayTolerance);
+      // Serial.print("\nAND\n");
+      // Serial.print(diff(RCSwitch::timings[i + 1], delay * pro.zero.low));
+      // Serial.print(" < ");
+      // Serial.print(delayTolerance);
+      // Serial.print("\n");
+      //
+      // Serial.print("############\n");
+      // Serial.print("changecount 1 \n");
+      // Serial.print(diff(RCSwitch::timings[i], delay * pro.one.high));
+      // Serial.print(" < ");
+      // Serial.print(delayTolerance);
+      // Serial.print("\nAND\n");
+      // Serial.print(diff(RCSwitch::timings[i + 1], delay * pro.one.low));
+      // Serial.print(" < ");
+      // Serial.print(delayTolerance);
+      // Serial.print("\n");
+
         code <<= 1;
         if (diff(RCSwitch::timings[i], delay * pro.zero.high) < delayTolerance &&
             diff(RCSwitch::timings[i + 1], delay * pro.zero.low) < delayTolerance) {
             // zero
+            // Serial.print("match 1\n");
+            // Serial.print(changeCount);
+            // Serial.print("\n");
+            code |= 1;
+
         } else if (diff(RCSwitch::timings[i], delay * pro.one.high) < delayTolerance &&
                    diff(RCSwitch::timings[i + 1], delay * pro.one.low) < delayTolerance) {
             // one
-            code |= 1;
+            // Serial.print("match 0\n");
+            // Serial.print(changeCount);
+            // Serial.print("\n");
+            //code |= 1;
         } else {
             // Failed
+            // Serial.print("failed ");
+            // Serial.print(changeCount);
+            // Serial.print("\n");
             return false;
         }
     }
@@ -657,6 +716,42 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     return false;
 }
 
+bool match(int index, int value) {
+    int a,b,c,d,e,f,g,h;
+    int modop = RCSWITCH_MAX_CHANGES;
+
+
+  a = ((int)index - 7 + modop) % modop;
+  b = ((int)index - 6 + modop) % modop;
+  c = ((int)index - 5 + modop) % modop;
+  d = ((int)index - 4 + modop) % modop;
+  e = ((int)index - 3 + modop) % modop;
+  f = ((int)index - 2 + modop) % modop;
+  g = ((int)index - 1 + modop) % modop;
+  //h = ((int)index - 1 + modop) % modop;
+
+
+
+//  if (RCSwitch::timings[a] > 400 && RCSwitch::timings[a] < 800) {
+//     if (RCSwitch::timings[b] > 2000 && RCSwitch::timings[b] < 2500) {
+//      if (RCSwitch::timings[c] > 400 && RCSwitch::timings[c] < 800) {
+//        if (RCSwitch::timings[d] > 2000 && RCSwitch::timings[d] < 2500) {
+
+//          if (RCSwitch::timings[e] > 400 && RCSwitch::timings[e] < 800) {
+ //            if (RCSwitch::timings[f] > 2000 && RCSwitch::timings[f] < 2500) {
+              if (RCSwitch::timings[g] > 1300 && RCSwitch::timings[g] < 1400) {
+                if (value > 1500 && value < 1650) {
+
+          //Serial.println("match");
+          return true;
+        }
+  //    }}}}
+   //   }
+    //}
+  }
+  return false;
+}
+
 void RECEIVE_ATTR RCSwitch::handleInterrupt() {
 
   static unsigned int changeCount = 0;
@@ -666,10 +761,13 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
   const long time = micros();
   const unsigned int duration = time - lastTime;
 
-  if (duration > RCSwitch::nSeparationLimit) {
+  //if (duration > RCSwitch::nSeparationLimit) {
+  if (match(changeCount, duration)) {
     // A long stretch without signal level change occurred. This could
     // be the gap between two transmission.
-    if (diff(duration, RCSwitch::timings[0]) < 200) {
+
+    if (true) {
+//    if (diff(duration, RCSwitch::timings[0]) < 200) {
       // This long signal is close in length to the long signal which
       // started the previously recorded timings; this suggests that
       // it may indeed by a a gap between two transmissions (we assume
@@ -683,12 +781,19 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
             break;
           }
         }
+        // for (int i = 0; i <= changeCount; i++) {
+        //   Serial.print(RCSwitch::timings[i]);
+        //   Serial.print(",");
+        // }
+        Serial.print("\n");
         repeatCount = 0;
       }
     }
     changeCount = 0;
+//    RCSwitch::timings[changeCount++] = 1000;
+    RCSwitch::timings[changeCount++] = RCSwitch::nSeparationLimit;
   }
- 
+
   // detect overflow
   if (changeCount >= RCSWITCH_MAX_CHANGES) {
     changeCount = 0;
@@ -696,6 +801,6 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
   }
 
   RCSwitch::timings[changeCount++] = duration;
-  lastTime = time;  
+  lastTime = time;
 }
 #endif

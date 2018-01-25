@@ -18,7 +18,10 @@ void setup() {
 
 void loop() {
   if (mySwitch.available()) {
+    Serial.print("hello");
     output(mySwitch.getReceivedValue(), mySwitch.getReceivedBitlength(), mySwitch.getReceivedDelay(), mySwitch.getReceivedRawdata(),mySwitch.getReceivedProtocol());
     mySwitch.resetAvailable();
+  } else {
+    //Serial.print("offline");
   }
 }

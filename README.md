@@ -3,6 +3,13 @@
 
 Use your Arduino or Raspberry Pi to operate remote radio controlled devices
 
+## HACK!
+
+Ungentle mofifications to read biltema pool thermometer.
+
+Go to source of fork for a good starting point.
+
+
 ## Download
 https://github.com/sui77/rc-switch/releases/latest
 
@@ -22,7 +29,7 @@ or more devices with one of the supported chipsets:
  - SC5262 / SC5272
  - HX2262 / HX2272
  - PT2262 / PT2272
- - EV1527 / RT1527 / FP1527 / HS1527 
+ - EV1527 / RT1527 / FP1527 / HS1527
  - Intertechno outlets
  - HT6P20X
 

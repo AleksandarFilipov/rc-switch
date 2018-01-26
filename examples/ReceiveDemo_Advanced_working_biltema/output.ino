@@ -36,10 +36,10 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
       unsigned long dec = 0UL;
 
       dec = (decimal & 0x2000) >> 13;
-      dec = dec | ((decimal & 0x1000) >> 12);
-      dec = dec | ((decimal & 0x800)) >> 11;
-      dec = dec | ((decimal & 0x400) >> 10);
-      dec = dec | ((decimal & 0x200) >> 9);
+      dec = dec | ((decimal & 0x1000) >> 11);
+      dec = dec | ((decimal & 0x800)) >> 9;
+      dec = dec | ((decimal & 0x400) >> 7);
+      dec = dec | ((decimal & 0x200) >> 5);
 
 
 

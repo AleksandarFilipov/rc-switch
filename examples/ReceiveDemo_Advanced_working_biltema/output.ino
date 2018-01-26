@@ -23,14 +23,7 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
     {
       
       unsigned long decoded = 0UL;
-      //decoded = (0x1FF & 0x0100) >> 8;
-/*      decoded = (decimal & 0x20) >> 5;
-      decoded = decoded | ((decimal & 0x10) >> 3);
-      decoded = decoded | ((decimal & 0x08) >> 1);
-      decoded = decoded | ((decimal & 0x04) << 1);
-      decoded = decoded | ((decimal & 0x80) >> 3);
-      decoded = decoded | ((decimal & 0x40) << 0);
-      decoded = decoded | ((decimal & 0x02) << 5);*/
+
 
       decoded = (decimal & 0x20) >> 5;
       decoded = decoded | ((decimal & 0x10) >> 3);
@@ -40,13 +33,25 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
       decoded = decoded | ((decimal & 0x40) >> 1);
       decoded = decoded | ((decimal & 0x02) << 5);
 
+      unsigned long dec = 0UL;
+
+      dec = (decimal & 0x2000) >> 13;
+      dec = dec | ((decimal & 0x1000) >> 12);
+      dec = dec | ((decimal & 0x800)) >> 11;
+      dec = dec | ((decimal & 0x400) >> 10);
+      dec = dec | ((decimal & 0x200) >> 9);
+
+
 
       Serial.println("decoded ");
       Serial.println(decoded);
+      Serial.println(dec);
       Serial.println("decoded minus 41 ");
       Serial.println(decoded-41UL);
+      Serial.println(dec-10UL);
       Serial.println("decoded try 2 ");
       Serial.println(decoded-41UL);
+      Serial.println(dec-10UL);
       
             
     }

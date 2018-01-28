@@ -785,7 +785,7 @@ void RECEIVE_ATTR RCSwitch::handleInterrupt() {
         //   Serial.print(RCSwitch::timings[i]);
         //   Serial.print(",");
         // }
-        Serial.print("\n");
+        // Serial.print("\n");
         repeatCount = 0;
       }
     }

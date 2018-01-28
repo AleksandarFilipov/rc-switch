@@ -1,6 +1,39 @@
 static const char* bin2tristate(const char* bin);
 static char * dec2binWzerofill(unsigned long Dec, unsigned int bitLength);
 
+void output_to_temp(unsigned long decimal) {
+  unsigned long decoded = 0UL;
+
+
+  decoded = (decimal & 0x20) >> 5;
+  decoded = decoded | ((decimal & 0x10) >> 3);
+  decoded = decoded | ((decimal & 0x08) >> 1);
+  decoded = decoded | ((decimal & 0x04) << 1);
+  decoded = decoded | ((decimal & 0x80) >> 3);
+  decoded = decoded | ((decimal & 0x40) >> 1);
+  decoded = decoded | ((decimal & 0x02) << 5);
+
+  unsigned long dec = 0UL;
+
+  dec = (decimal & 0x2000) >> 13;
+  dec = dec | ((decimal & 0x1000) >> 11);
+  dec = dec | ((decimal & 0x800)) >> 9;
+  dec = dec | ((decimal & 0x400) >> 7);
+  dec = dec | ((decimal & 0x200) >> 5);
+
+
+
+  Serial.println("decoded ");
+  Serial.println(decoded);
+  Serial.println(dec);
+  Serial.println("decoded minus 41 ");
+  Serial.println(decoded-41UL);
+  Serial.println(dec-10UL);
+  Serial.println("decoded try 2 ");
+  Serial.println(decoded-41UL);
+  Serial.println(dec-10UL);
+}
+
 void output(unsigned long decimal, unsigned int length, unsigned int delay, unsigned int* raw, unsigned int protocol) {
 
   if (decimal == 0) {
@@ -20,8 +53,12 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
     Serial.print(" microseconds");
     Serial.print(" Protocol: ");
     Serial.println(protocol);
+
+    output_to_temp(decimal);
+
+    /**
     {
-      
+
       unsigned long decoded = 0UL;
 
 
@@ -52,12 +89,12 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
       Serial.println("decoded try 2 ");
       Serial.println(decoded-41UL);
       Serial.println(dec-10UL);
-      
-            
-    }
-    
+
+
+    }**/
+
   }
-  
+
   Serial.print("Raw data: ");
   for (unsigned int i=0; i<= length*2; i++) {
     Serial.print(raw[i]);
@@ -89,7 +126,7 @@ static const char* bin2tristate(const char* bin) {
 }
 
 static char * dec2binWzerofill(unsigned long Dec, unsigned int bitLength) {
-  static char bin[64]; 
+  static char bin[64];
   unsigned int i=0;
 
   while (Dec > 0) {
@@ -105,7 +142,6 @@ static char * dec2binWzerofill(unsigned long Dec, unsigned int bitLength) {
     }
   }
   bin[bitLength] = '\0';
-  
+
   return bin;
 }
-
